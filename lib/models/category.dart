@@ -13,7 +13,7 @@ enum Categories {
     other
   }
 class Category{
- const Category({required this.categories, required this.color});
- final String categories;
+ const Category({required this.title, required this.color});
+ final String title;
  final Color color;
 }
