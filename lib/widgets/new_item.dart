@@ -1,9 +1,12 @@
 // ignore_for_file: unnecessary_null_comparison
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:testing/data/categories.dart';
 import 'package:testing/models/category.dart';
-import 'package:testing/models/grocery_item.dart';
+// import 'package:testing/models/grocery_item.dart';
+import 'package:http/http.dart' as http;
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -17,18 +20,41 @@ class NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
   // ignore: prefer_typing_uninitialized_variables
   var name;
-  var quantity=1;
-  var category=categories[Categories.dairy]!;
-  void _saveITems() {
-   if( _formKey.currentState!.validate()){
-    _formKey.currentState!.save();
-    Navigator.of(context).pop(
-      GroceryItem(id: DateTime.now().toString(), name: name, quantity: quantity, category: category)
-    );
-    print(name);
-    print(quantity);
-    print(category);
-   }
+  var quantity = 1;
+  var category = categories[Categories.dairy]!;
+  void _saveITems() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final url = Uri.https(
+          'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
+          'shopping-list.json');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(
+          {
+            'name': name,
+            'quantity': quantity,
+            'category': category,
+          },
+        ),
+      );
+      if (!context.mounted) {
+        return;
+      } else {
+        Navigator.of(context).pop();
+      }
+      //OR
+//.then((response) {
+// response.body;//it's the response from firease with the data
+// response.statusCode;//it's used to check whether data is successfully submitted or not: 200 for success: 400/500, for error
+//       });
+      // Navigator.of(context).pop(GroceryItem(
+      //     id: DateTime.now().toString(),
+      //     name: name,
+      //     quantity: quantity,
+      //     category: category));
+    }
   }
 
   @override
@@ -77,7 +103,7 @@ class NewItemState extends State<NewItem> {
                         }
                         return null;
                       },
-                      onSaved: (value) => quantity=int.parse(value!),
+                      onSaved: (value) => quantity = int.parse(value!),
                     ),
                   ),
                   const SizedBox(
@@ -100,14 +126,14 @@ class NewItemState extends State<NewItem> {
                                 const SizedBox(
                                   width: 6,
                                 ),
-                                Text(category.value.categories),
+                                Text(category.value.title),
                               ],
                             ),
                           )
                       ],
                       onChanged: (value) {
                         setState(() {
-                          category=value!;
+                          category = value!;
                         });
                       },
                     ),
