@@ -14,19 +14,26 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
+  var _isLoading = true;
+  String? _error;
   void _getResponse() async {
-    final url = Uri.https(            
+    final url = Uri.https(
         'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
         'shopping-list.json');
     final response = await http.get(url);
     print(response.body);
-    final Map<String,dynamic> listData =
-        json.decode(response.body);
+    if(response.statusCode>=400)
+    {
+      setState(() {
+      _error="No data found, try again later";
+      });
+    }
+    final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> tempList = [];
     for (final item in listData.entries) {
       final category = categories.entries
-          .firstWhere((catItems) =>
-              catItems.value.title == item.value['category'])
+          .firstWhere(
+              (catItems) => catItems.value.title == item.value['category'])
           .value;
       tempList.add(
         GroceryItem(
@@ -37,7 +44,8 @@ class _GroceryListState extends State<GroceryList> {
       );
     }
     setState(() {
-     groceryItems =tempList;
+      groceryItems = tempList;
+      _isLoading = false;
     });
   }
 
@@ -47,19 +55,21 @@ class _GroceryListState extends State<GroceryList> {
     _getResponse();
   }
 
-   List<GroceryItem> groceryItems = [];
+  List<GroceryItem> groceryItems = [];
   void _addItem() async {
     // final newItem = await
-    Navigator.of(context).push<GroceryItem>(MaterialPageRoute(builder: (ctx) {
+    final newItem = await Navigator.of(context)
+        .push<GroceryItem>(MaterialPageRoute(builder: (ctx) {
       return const NewItem();
     }));
-    // if (newItem == null) {
-    //   return; // we put this condition bcz new item page could be null if users switch back to this page without entering any data
-    // }
-    // setState(() {
-    //   groceryItems.add(newItem);
-    // });
-    _getResponse();
+
+    if (newItem == null) {
+      return; // we put this condition bcz new item page could be null if users switch back to this page without entering any data
+    }
+    setState(() {
+      groceryItems.add(newItem);
+    });
+    // _getResponse();
   }
 
   @override
@@ -85,16 +95,20 @@ class _GroceryListState extends State<GroceryList> {
     }
 
     Widget currentScreen;
-    if (groceryItems.isEmpty) {
+    currentScreen = const Center(
+      child: Text(
+        'No item found. try to add some!',
+        style: TextStyle(
+            fontFamily: AutofillHints.creditCardExpirationDay,
+            fontWeight: FontWeight.bold),
+      ),
+    );
+    if (_isLoading) {
       currentScreen = const Center(
-        child: Text(
-          'No item found. try to add some!',
-          style: TextStyle(
-              fontFamily: AutofillHints.creditCardExpirationDay,
-              fontWeight: FontWeight.bold),
-        ),
+        child: CircularProgressIndicator(),
       );
-    } else {
+    }
+    if (groceryItems.isNotEmpty) {
       currentScreen = ListView.builder(
           itemCount: groceryItems.length,
           itemBuilder: (context, index) {
@@ -117,6 +131,10 @@ class _GroceryListState extends State<GroceryList> {
               onDismissed: (direction) => removeItem(groceryItems[index]),
             );
           });
+    }
+    if(_error!=null)
+    {
+currentScreen=Center(child: Text(_error!),);
     }
 
     return Scaffold(
