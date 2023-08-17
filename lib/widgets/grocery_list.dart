@@ -27,6 +27,14 @@ class _GroceryListState extends State<GroceryList> {
         _error = "No data found, try again later";
       });
     }
+    if (response.body ==
+        'null') //if there is no data in db, we will see progress bar only, that's way we have added this check, firebase returns null as a string
+    {
+      setState(() {
+        _isLoading = false;
+        return;
+      });
+    }
     final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> tempList = [];
     for (final item in listData.entries) {
