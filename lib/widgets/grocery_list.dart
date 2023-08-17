@@ -75,6 +75,10 @@ class _GroceryListState extends State<GroceryList> {
   @override
   Widget build(BuildContext context) {
     void removeItem(GroceryItem g) {
+          final url = Uri.https(
+        'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
+        'shopping-list/${g.id}.json');
+        http.delete(url);
       final groceryIndex = groceryItems.indexOf(g);
       setState(() {
         groceryItems.remove(g);
