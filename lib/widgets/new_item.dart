@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:testing/data/categories.dart';
 import 'package:testing/models/category.dart';
-// import 'package:testing/models/grocery_item.dart';
+import 'package:testing/models/grocery_item.dart';
 import 'package:http/http.dart' as http;
 
 class NewItem extends StatefulWidget {
@@ -18,12 +18,16 @@ class NewItem extends StatefulWidget {
 
 class NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  var _isSending = false;
   // ignore: prefer_typing_uninitialized_variables
   var name;
   var quantity = 1;
   var category = categories[Categories.dairy]!;
   void _saveITems() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSending = true;
+      });
       _formKey.currentState!.save();
       final url = Uri.https(
           'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
@@ -35,25 +39,32 @@ class NewItemState extends State<NewItem> {
           {
             'name': name,
             'quantity': quantity,
-            'category': category,
+            'category': category.title,
           },
         ),
       );
+      final Map<String, dynamic> getId = json.decode(response.body);
       if (!context.mounted) {
         return;
-      } else {
-        Navigator.of(context).pop();
-      }
-      //OR
+      } else
+      //  {
+      //   Navigator.of(context).pop();
+      // }
+      {
+        //OR
 //.then((response) {
 // response.body;//it's the response from firease with the data
 // response.statusCode;//it's used to check whether data is successfully submitted or not: 200 for success: 400/500, for error
 //       });
-      // Navigator.of(context).pop(GroceryItem(
-      //     id: DateTime.now().toString(),
-      //     name: name,
-      //     quantity: quantity,
-      //     category: category));
+        Navigator.of(context).pop(
+          GroceryItem(
+            id: getId['name'],
+            name: name,
+            quantity: quantity,
+            categories: category,
+          ),
+        );
+      }
     }
   }
 
@@ -147,14 +158,22 @@ class NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveITems,
-                    child: const Text('Add new'),
+                    onPressed: _isSending ? null : _saveITems,
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text('Add new'),
                   ),
                   //OR
                   // ElevatedButton(
