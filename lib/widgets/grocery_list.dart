@@ -22,10 +22,9 @@ class _GroceryListState extends State<GroceryList> {
         'shopping-list.json');
     final response = await http.get(url);
     print(response.body);
-    if(response.statusCode>=400)
-    {
+    if (response.statusCode >= 400) {
       setState(() {
-      _error="No data found, try again later";
+        _error = "No data found, try again later";
       });
     }
     final Map<String, dynamic> listData = json.decode(response.body);
@@ -74,12 +73,18 @@ class _GroceryListState extends State<GroceryList> {
 
   @override
   Widget build(BuildContext context) {
-    void removeItem(GroceryItem g) {
-          final url = Uri.https(
-        'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
-        'shopping-list/${g.id}.json');
-        http.delete(url);
+    void removeItem(GroceryItem g) async {
+      final url = Uri.https(
+          'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
+          'shopping-list/${g.id}.json');
+      var response = await http.delete(url);
       final groceryIndex = groceryItems.indexOf(g);
+      if (response.statusCode >= 400) {
+        //managing
+        setState(() {
+          groceryItems.insert(groceryIndex, g);
+        });
+      }
       setState(() {
         groceryItems.remove(g);
       });
@@ -122,8 +127,8 @@ class _GroceryListState extends State<GroceryList> {
                 margin: EdgeInsets.symmetric(
                     horizontal: Theme.of(context).canvasColor.red.toDouble()),
               ),
-              key: ValueKey(groceryItems[index]
-                  .id), //key Should be different for every list item i.e. id
+              key:
+                  UniqueKey(), //key Should be different for every list item i.e. id
               child: ListTile(
                   leading: Container(
                     width: 24,
@@ -136,9 +141,10 @@ class _GroceryListState extends State<GroceryList> {
             );
           });
     }
-    if(_error!=null)
-    {
-currentScreen=Center(child: Text(_error!),);
+    if (_error != null) {
+      currentScreen = Center(
+        child: Text(_error!),
+      );
     }
 
     return Scaffold(
