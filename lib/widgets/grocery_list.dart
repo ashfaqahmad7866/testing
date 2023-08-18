@@ -20,40 +20,45 @@ class _GroceryListState extends State<GroceryList> {
     final url = Uri.https(
         'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
         'shopping-list.json');
-    final response = await http.get(url);
-    print(response.body);
-    if (response.statusCode >= 400) {
+    try {
+      final response = await http.get(url);
+      // if (response.statusCode >= 400) {
+      //   setState(() {
+      //     _error = "No data found, try again later";
+      //   });
+      // }
+      if (response.body ==
+          'null') //if there is no data in db, we will see progress bar only, that's way we have added this check, firebase returns null as a string
+      {
+        setState(() {
+          _isLoading = false;
+          return;
+        });
+      }
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> tempList = [];
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+                (catItems) => catItems.value.title == item.value['category'])
+            .value;
+        tempList.add(
+          GroceryItem(
+              id: item.key,
+              name: item.value['name'],
+              quantity: item.value['quantity'],
+              categories: category),
+        );
+      }
+      setState(() {
+        groceryItems = tempList;
+        _isLoading = false;
+      });
+    } catch (error) {
       setState(() {
         _error = "No data found, try again later";
       });
     }
-    if (response.body ==
-        'null') //if there is no data in db, we will see progress bar only, that's way we have added this check, firebase returns null as a string
-    {
-      setState(() {
-        _isLoading = false;
-        return;
-      });
-    }
-    final Map<String, dynamic> listData = json.decode(response.body);
-    final List<GroceryItem> tempList = [];
-    for (final item in listData.entries) {
-      final category = categories.entries
-          .firstWhere(
-              (catItems) => catItems.value.title == item.value['category'])
-          .value;
-      tempList.add(
-        GroceryItem(
-            id: item.key,
-            name: item.value['name'],
-            quantity: item.value['quantity'],
-            categories: category),
-      );
-    }
-    setState(() {
-      groceryItems = tempList;
-      _isLoading = false;
-    });
   }
 
   @override

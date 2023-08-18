@@ -19,6 +19,7 @@ class NewItem extends StatefulWidget {
 class NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
   var _isSending = false;
+  String? response;
   // ignore: prefer_typing_uninitialized_variables
   var name;
   var quantity = 1;
@@ -32,42 +33,45 @@ class NewItemState extends State<NewItem> {
       final url = Uri.https(
           'flutter-preparation-98c2f-default-rtdb.firebaseio.com',
           'shopping-list.json');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(
-          {
-            'name': name,
-            'quantity': quantity,
-            'category': category.title,
-          },
-        ),
-      );
-      final Map<String, dynamic> getId = json.decode(response.body);
-      if (!context.mounted) {
-        return;
-      } else
-      //  {
-      //   Navigator.of(context).pop();
-      // }
-      {
-        //OR
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(
+            {
+              'name': name,
+              'quantity': quantity,
+              'category': category.title,
+            },
+          ),
+        );
+        final Map<String, dynamic> getId = json.decode(response.body);
+        if (!context.mounted) {
+          return;
+        } else
+        //  {
+        //   Navigator.of(context).pop();
+        // }
+        {
+          //OR
 //.then((response) {
 // response.body;//it's the response from firease with the data
 // response.statusCode;//it's used to check whether data is successfully submitted or not: 200 for success: 400/500, for error
 //       });
-        Navigator.of(context).pop(
-          GroceryItem(
-            id: getId['name'],
-            name: name,
-            quantity: quantity,
-            categories: category,
-          ),
-        );
+          Navigator.of(context).pop(
+            GroceryItem(
+              id: getId['name'],
+              name: name,
+              quantity: quantity,
+              categories: category,
+            ),
+          );
+        }
+      } catch (error) {
+        return;
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
